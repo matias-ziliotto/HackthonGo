@@ -54,6 +54,7 @@ func TestProductGet(t *testing.T) {
 	// Arrange
 	db, err := sql.InitTxSqlDb()
 	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
 	repository := NewProductRepository(db)
 
 	// Act
@@ -69,6 +70,7 @@ func TestProductGetNotFound(t *testing.T) {
 	// Arrange
 	db, err := sql.InitTxSqlDb()
 	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
 	repository := NewProductRepository(db)
 
 	// Act
@@ -83,6 +85,7 @@ func TestProductStoreBulk(t *testing.T) {
 	// Arrange
 	db, err := sql.InitTxSqlDb()
 	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
 	repository := NewProductRepository(db)
 
 	// Act
@@ -97,6 +100,7 @@ func TestProductStoreBulkErrorPrepare(t *testing.T) {
 	// Arrange
 	db, err := sql.InitTxSqlDb()
 	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
 	repository := NewProductRepository(db)
 
 	// Act
@@ -111,6 +115,7 @@ func TestProductStoreBulkError(t *testing.T) {
 	// Arrange
 	db, err := sql.InitTxSqlDb()
 	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
 	repository := NewProductRepository(db)
 
 	// Act
