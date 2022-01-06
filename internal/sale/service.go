@@ -53,6 +53,7 @@ func (s *saleService) StoreBulk(ctx context.Context) ([]domain.Sale, error) {
 		quantity, errQuantity := strconv.ParseFloat(line[3], 64)
 
 		if errId == nil && errInvoiceId == nil && errProductId == nil && errQuantity == nil {
+			emptySale := domain.Sale{}
 			saleAux := domain.Sale{
 				Id:         id,
 				Invoice_id: invoiceId,
@@ -60,7 +61,11 @@ func (s *saleService) StoreBulk(ctx context.Context) ([]domain.Sale, error) {
 				Quantity:   quantity,
 			}
 
-			sales = append(sales, saleAux)
+			// Check if customer already exists
+			saleExists, err := s.repository.Get(ctx, saleAux.Id)
+			if err == nil && saleExists == emptySale {
+				sales = append(sales, saleAux)
+			}
 		}
 	}
 

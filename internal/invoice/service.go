@@ -52,6 +52,7 @@ func (s *invoiceService) StoreBulk(ctx context.Context) ([]domain.Invoice, error
 		customerId, errCustomerId := strconv.Atoi(line[2])
 
 		if errId == nil && errCustomerId == nil {
+			emptyInvoice := domain.Invoice{}
 			invoiceAux := domain.Invoice{
 				Id:          id,
 				Customer_id: customerId,
@@ -59,7 +60,11 @@ func (s *invoiceService) StoreBulk(ctx context.Context) ([]domain.Invoice, error
 				Total:       0, // TODO: ver
 			}
 
-			invoices = append(invoices, invoiceAux)
+			// Check if invoice already exists
+			invoiceExists, err := s.repository.Get(ctx, invoiceAux.Id)
+			if err == nil && invoiceExists == emptyInvoice {
+				invoices = append(invoices, invoiceAux)
+			}
 		}
 	}
 

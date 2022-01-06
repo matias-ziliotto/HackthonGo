@@ -52,14 +52,23 @@ func (s *productService) StoreBulk(ctx context.Context) ([]domain.Product, error
 		price, errPrice := strconv.ParseFloat(line[2], 64)
 
 		if errId == nil && errPrice == nil {
+			emptyProduct := domain.Product{}
 			productAux := domain.Product{
 				Id:          id,
 				Description: description,
 				Price:       price,
 			}
 
-			products = append(products, productAux)
+			// Check if product already exists
+			productExists, err := s.repository.Get(ctx, productAux.Id)
+			if err == nil && productExists == emptyProduct {
+				products = append(products, productAux)
+			}
 		}
+	}
+
+	if len(products) == 0 {
+		return products, nil
 	}
 
 	productsSaved, err := s.repository.StoreBulk(ctx, products)

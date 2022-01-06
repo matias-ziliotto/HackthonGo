@@ -53,6 +53,7 @@ func (s *customerService) StoreBulk(ctx context.Context) ([]domain.Customer, err
 		situation := line[3]
 
 		if errId == nil {
+			emptyCustomer := domain.Customer{}
 			customerAux := domain.Customer{
 				Id:        id,
 				FirstName: firstName,
@@ -60,7 +61,11 @@ func (s *customerService) StoreBulk(ctx context.Context) ([]domain.Customer, err
 				Situation: situation,
 			}
 
-			customers = append(customers, customerAux)
+			// Check if customer already exists
+			customerExists, err := s.repository.Get(ctx, customerAux.Id)
+			if err == nil && customerExists == emptyCustomer {
+				customers = append(customers, customerAux)
+			}
 		}
 	}
 
