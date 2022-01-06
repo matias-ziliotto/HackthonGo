@@ -23,7 +23,6 @@ var (
 
 type ProductRepository interface {
 	Get(ctx context.Context, id int) (domain.Product, error)
-	Store(ctx context.Context, product domain.Product) (domain.Product, error)
 	StoreBulk(ctx context.Context, products []domain.Product) ([]domain.Product, error)
 }
 
@@ -39,37 +38,11 @@ type productRepository struct {
 
 func (r *productRepository) Get(ctx context.Context, id int) (domain.Product, error) {
 	var product domain.Product
-	err := r.db.QueryRowContext(ctx, GetProductQuery, id).Scan(&product)
+	err := r.db.QueryRowContext(ctx, GetProductQuery, id).Scan(&product.Id, &product.Description, &product.Price)
 
 	if err != nil {
 		return domain.Product{}, ErrorProductNotFound
 	}
-
-	return product, nil
-}
-
-func (r *productRepository) Store(ctx context.Context, product domain.Product) (domain.Product, error) {
-	stmt, err := r.db.PrepareContext(ctx, StoreProductStatement)
-
-	if err != nil {
-		return domain.Product{}, ErrorProductPrepareStoreStatement
-	}
-
-	defer stmt.Close()
-
-	result, err := stmt.ExecContext(ctx, product.Description, product.Price)
-
-	if err != nil {
-		return domain.Product{}, ErrorProductExecStoreStatement
-	}
-
-	id, err := result.LastInsertId()
-
-	if err != nil {
-		return domain.Product{}, err
-	}
-
-	product.Id = int(id)
 
 	return product, nil
 }
