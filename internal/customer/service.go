@@ -48,8 +48,8 @@ func (s *customerService) StoreBulk(ctx context.Context) ([]domain.Customer, err
 
 	for _, line := range data {
 		id, errId := strconv.Atoi(line[0])
-		firstName := line[1]
-		lastName := line[2]
+		lastName := line[1]
+		firstName := line[2]
 		situation := line[3]
 
 		if errId == nil {
