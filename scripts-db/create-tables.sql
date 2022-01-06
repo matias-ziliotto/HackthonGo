@@ -1,0 +1,37 @@
+CREATE TABLE IF NOT EXISTS products(
+	id INT NOT NULL AUTO_INCREMENT,
+	price float NOT NULL,
+	description VARCHAR (45) NOT NULL,
+
+	PRIMARY KEY(id)
+);
+
+CREATE TABLE IF NOT EXISTS customers(
+	id INT NOT NULL AUTO_INCREMENT,
+	first_name VARCHAR (45) NOT NULL,
+	last_name VARCHAR (45) NOT NULL,
+	situation VARCHAR (45) NOT NULL,
+
+	PRIMARY KEY(id)
+);
+
+CREATE TABLE IF NOT EXISTS invoices(
+	id INT NOT NULL AUTO_INCREMENT,
+	customer_id INT NOT NULL,
+	datetime DATETIME NOT NULL,
+	total FLOAT NOT NULL,
+
+	PRIMARY KEY(id),
+	FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+
+CREATE TABLE IF NOT EXISTS sales(
+	id INT NOT NULL AUTO_INCREMENT,
+	invoice_id INT NOT NULL,
+	product_id INT NOT NULL,
+	quantity FLOAT NOT NULL,
+
+	PRIMARY KEY(id),
+	FOREIGN KEY (invoice_id) REFERENCES invoices(id),
+	FOREIGN KEY (product_id) REFERENCES products(id)
+);
