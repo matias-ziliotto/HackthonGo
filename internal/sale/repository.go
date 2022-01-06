@@ -23,7 +23,6 @@ var (
 
 type SaleRepository interface {
 	Get(ctx context.Context, id int) (domain.Sale, error)
-	Store(ctx context.Context, sale domain.Sale) (domain.Sale, error)
 	StoreBulk(ctx context.Context, sales []domain.Sale) ([]domain.Sale, error)
 }
 
@@ -39,37 +38,11 @@ type saleRepository struct {
 
 func (r *saleRepository) Get(ctx context.Context, id int) (domain.Sale, error) {
 	var sale domain.Sale
-	err := r.db.QueryRowContext(ctx, GetSaleQuery, id).Scan(&sale)
+	err := r.db.QueryRowContext(ctx, GetSaleQuery, id).Scan(&sale.Id, &sale.Invoice_id, &sale.Product_id, &sale.Quantity)
 
 	if err != nil {
 		return domain.Sale{}, ErrorSaleNotFound
 	}
-
-	return sale, nil
-}
-
-func (r *saleRepository) Store(ctx context.Context, sale domain.Sale) (domain.Sale, error) {
-	stmt, err := r.db.PrepareContext(ctx, StoreSaleStatement)
-
-	if err != nil {
-		return domain.Sale{}, ErrorSalePrepareStoreStatement
-	}
-
-	defer stmt.Close()
-
-	result, err := stmt.ExecContext(ctx, sale.Invoice_id, sale.Product_id, sale.Quantity)
-
-	if err != nil {
-		return domain.Sale{}, ErrorSaleExecStoreStatement
-	}
-
-	id, err := result.LastInsertId()
-
-	if err != nil {
-		return domain.Sale{}, err
-	}
-
-	sale.Id = int(id)
 
 	return sale, nil
 }

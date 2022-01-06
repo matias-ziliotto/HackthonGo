@@ -23,7 +23,6 @@ var (
 
 type CustomerRepository interface {
 	Get(ctx context.Context, id int) (domain.Customer, error)
-	Store(ctx context.Context, customer domain.Customer) (domain.Customer, error)
 	StoreBulk(ctx context.Context, customers []domain.Customer) ([]domain.Customer, error)
 }
 
@@ -39,37 +38,11 @@ type customerRepository struct {
 
 func (r *customerRepository) Get(ctx context.Context, id int) (domain.Customer, error) {
 	var customer domain.Customer
-	err := r.db.QueryRowContext(ctx, GetCustomerQuery, id).Scan(&customer)
+	err := r.db.QueryRowContext(ctx, GetCustomerQuery, id).Scan(&customer.Id, &customer.FirstName, &customer.LastName, &customer.Situation)
 
 	if err != nil {
 		return domain.Customer{}, ErrorCustomerNotFound
 	}
-
-	return customer, nil
-}
-
-func (r *customerRepository) Store(ctx context.Context, customer domain.Customer) (domain.Customer, error) {
-	stmt, err := r.db.PrepareContext(ctx, StoreCustomerStatement)
-
-	if err != nil {
-		return domain.Customer{}, ErrorCustomerPrepareStoreStatement
-	}
-
-	defer stmt.Close()
-
-	result, err := stmt.ExecContext(ctx, customer.FirstName, customer.LastName, customer.Situation)
-
-	if err != nil {
-		return domain.Customer{}, ErrorCustomerExecStoreStatement
-	}
-
-	id, err := result.LastInsertId()
-
-	if err != nil {
-		return domain.Customer{}, err
-	}
-
-	customer.Id = int(id)
 
 	return customer, nil
 }

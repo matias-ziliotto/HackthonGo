@@ -23,7 +23,6 @@ var (
 
 type InvoiceRepository interface {
 	Get(ctx context.Context, id int) (domain.Invoice, error)
-	Store(ctx context.Context, invoice domain.Invoice) (domain.Invoice, error)
 	StoreBulk(ctx context.Context, invoices []domain.Invoice) ([]domain.Invoice, error)
 }
 
@@ -39,37 +38,11 @@ type invoiceRepository struct {
 
 func (r *invoiceRepository) Get(ctx context.Context, id int) (domain.Invoice, error) {
 	var invoice domain.Invoice
-	err := r.db.QueryRowContext(ctx, GetInvoiceQuery, id).Scan(&invoice)
+	err := r.db.QueryRowContext(ctx, GetInvoiceQuery, id).Scan(&invoice.Id, &invoice.Customer_id, &invoice.Datetime, &invoice.Total)
 
 	if err != nil {
 		return domain.Invoice{}, ErrorInvoiceNotFound
 	}
-
-	return invoice, nil
-}
-
-func (r *invoiceRepository) Store(ctx context.Context, invoice domain.Invoice) (domain.Invoice, error) {
-	stmt, err := r.db.PrepareContext(ctx, StoreInvoiceStatement)
-
-	if err != nil {
-		return domain.Invoice{}, ErrorInvoicePrepareStoreStatement
-	}
-
-	defer stmt.Close()
-
-	result, err := stmt.ExecContext(ctx, invoice.Customer_id, invoice.Datetime, invoice.Total)
-
-	if err != nil {
-		return domain.Invoice{}, ErrorInvoiceExecStoreStatement
-	}
-
-	id, err := result.LastInsertId()
-
-	if err != nil {
-		return domain.Invoice{}, err
-	}
-
-	invoice.Id = int(id)
 
 	return invoice, nil
 }
