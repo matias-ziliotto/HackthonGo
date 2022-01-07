@@ -15,6 +15,7 @@ var (
 type InvoiceService interface {
 	Get(ctx context.Context, id int) (domain.Invoice, error)
 	StoreBulk(ctx context.Context) ([]domain.Invoice, error)
+	UpdateTotal(ctx context.Context) ([]domain.InvoiceTotalDTO, error)
 }
 
 func NewInvoiceService(pr InvoiceRepository) InvoiceService {
@@ -79,4 +80,29 @@ func (s *invoiceService) StoreBulk(ctx context.Context) ([]domain.Invoice, error
 	}
 
 	return invoicesSaved, nil
+}
+
+func (s *invoiceService) UpdateTotal(ctx context.Context) ([]domain.InvoiceTotalDTO, error) {
+	invoicesIds, err := s.repository.GetAllTotalEmpty(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	invoicesTotals, err := s.repository.CalculateTotal(ctx, invoicesIds)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, invoice := range invoicesTotals {
+		var invoiceAux domain.Invoice
+		invoiceAux.Id = invoice.Id
+		invoiceAux.Total = invoice.Total
+
+		_, err = s.repository.UpdateTotal(ctx, invoiceAux)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return invoicesTotals, nil
 }

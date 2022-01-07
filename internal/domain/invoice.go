@@ -13,3 +13,8 @@ type InvoiceDTO struct {
 	Datetime string   `json:"datetime"`
 	Total    float64  `json:"total"`
 }
+
+type InvoiceTotalDTO struct {
+	Id    int     `json:"id"`
+	Total float64 `json:"total"`
+}

@@ -12,8 +12,9 @@ import (
 
 var (
 	// Db queries & statements
-	GetAllTotalEmptyInvoiceQuery = "SELECT id, customer_id, datetime, total FROM invoices WHERE total = 0"
+	GetAllTotalEmptyInvoiceQuery = "SELECT id FROM invoices WHERE total = 0"
 	GetInvoiceQuery              = "SELECT id, customer_id, datetime, total FROM invoices WHERE id = ?"
+	CalculateTotalInvoiceQuery   = "SELECT DISTINCT(invoices.id), SUM(calc.total) as total FROM invoices INNER JOIN ( SELECT sales.invoice_id,  SUM(products.price) * sales.quantity AS total FROM sales INNER JOIN products ON products.id = sales.product_id WHERE sales.invoice_id IN replace_with_invoices_ids GROUP BY sales.id ) calc ON calc.invoice_id = invoices.id GROUP BY calc.invoice_id;"
 	StoreInvoiceStatement        = "INSERT INTO invoices(customer_id, datetime, total) VALUES(?, ?, ?)"
 	UpdateInvoiceStatement       = "UPDATE invoices SET total = ? WHERE id = ?"
 
@@ -26,11 +27,11 @@ var (
 )
 
 type InvoiceRepository interface {
-	GetAllTotalEmpty(ctx context.Context) ([]domain.Invoice, error)
+	GetAllTotalEmpty(ctx context.Context) ([]int, error)
 	Get(ctx context.Context, id int) (domain.Invoice, error)
 	StoreBulk(ctx context.Context, invoices []domain.Invoice) ([]domain.Invoice, error)
 	UpdateTotal(ctx context.Context, invoice domain.Invoice) (domain.Invoice, error)
-	// CalculateTotal(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error)
+	CalculateTotal(ctx context.Context, ids []int) ([]domain.InvoiceTotalDTO, error)
 }
 
 func NewInvoiceRepository(db *sql.DB) InvoiceRepository {
@@ -43,26 +44,26 @@ type invoiceRepository struct {
 	db *sql.DB
 }
 
-func (r *invoiceRepository) GetAllTotalEmpty(ctx context.Context) ([]domain.Invoice, error) {
+func (r *invoiceRepository) GetAllTotalEmpty(ctx context.Context) ([]int, error) {
 	rows, err := r.db.QueryContext(ctx, GetAllTotalEmptyInvoiceQuery)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var invoices []domain.Invoice
+	var invoicesIds []int
 
 	for rows.Next() {
-		var invoice domain.Invoice
-		err = rows.Scan(&invoice.Id, &invoice.Customer_id, &invoice.Datetime, &invoice.Total)
+		var invoiceId int
+		err = rows.Scan(&invoiceId)
 		if err != nil {
 			return nil, err
 		}
 
-		invoices = append(invoices, invoice)
+		invoicesIds = append(invoicesIds, invoiceId)
 	}
 
-	return invoices, nil
+	return invoicesIds, nil
 }
 
 func (r *invoiceRepository) Get(ctx context.Context, id int) (domain.Invoice, error) {
@@ -132,4 +133,30 @@ func (r *invoiceRepository) UpdateTotal(ctx context.Context, invoice domain.Invo
 	}
 
 	return invoice, nil
+}
+
+func (r *invoiceRepository) CalculateTotal(ctx context.Context, ids []int) ([]domain.InvoiceTotalDTO, error) {
+	// replace replace_with_invoices_ids with (id1, id2, id3) in query
+	query := CalculateTotalInvoiceQuery
+	query = strings.ReplaceAll(query, "replace_with_invoices_ids", "("+strings.Trim(strings.Join(strings.Fields(fmt.Sprint(ids)), ","), "[]")+")")
+
+	rows, err := r.db.QueryContext(ctx, query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var invoiceTotals []domain.InvoiceTotalDTO
+	for rows.Next() {
+		var invoiceAux domain.InvoiceTotalDTO
+
+		err = rows.Scan(&invoiceAux.Id, &invoiceAux.Total)
+		if err != nil {
+			return nil, err
+		}
+
+		invoiceTotals = append(invoiceTotals, invoiceAux)
+	}
+
+	return invoiceTotals, nil
 }
