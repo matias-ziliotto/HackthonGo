@@ -88,6 +88,10 @@ func (s *invoiceService) UpdateTotal(ctx context.Context) ([]domain.InvoiceTotal
 		return nil, err
 	}
 
+	if len(invoicesIds) == 0 {
+		return nil, nil
+	}
+
 	invoicesTotals, err := s.repository.CalculateTotal(ctx, invoicesIds)
 	if err != nil {
 		return nil, err
