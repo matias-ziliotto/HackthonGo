@@ -159,7 +159,7 @@ func TestInvoiceStoreBulkError(t *testing.T) {
 	assert.Nil(t, result, "result should be nil")
 }
 
-func TestInvoiceUpdate(t *testing.T) {
+func TestInvoiceUpdateTotal(t *testing.T) {
 	// Arrange
 	db, err := sql.InitTxSqlDb()
 	assert.Nil(t, err, "error should be nil")
@@ -174,7 +174,7 @@ func TestInvoiceUpdate(t *testing.T) {
 	_, err = repository.StoreBulk(context.Background(), invoicesToStore)
 	assert.Nil(t, err, "error should be nil")
 
-	invoiceUpdated, _ := repository.Update(context.Background(), invoiceToUpdate.Id, invoiceToUpdate)
+	invoiceUpdated, _ := repository.UpdateTotal(context.Background(), invoiceToUpdate.Id, invoiceToUpdate)
 
 	// Assert
 	assert.Equal(t, invoiceToUpdate, invoiceUpdated, "invoice updated should be equal invoice to update")

@@ -12,9 +12,10 @@ import (
 
 var (
 	// Db queries & statements
-	GetInvoiceQuery        = "SELECT id, customer_id, datetime, total FROM invoices WHERE id = ?"
-	StoreInvoiceStatement  = "INSERT INTO invoices(customer_id, datetime, total) VALUES(?, ?, ?)"
-	UpdateInvoiceStatement = "UPDATE invoices SET total = ? WHERE id = ?"
+	GetAllTotalEmptyInvoiceQuery = "SELECT id, customer_id, datetime, total FROM invoices WHERE total = 0"
+	GetInvoiceQuery              = "SELECT id, customer_id, datetime, total FROM invoices WHERE id = ?"
+	StoreInvoiceStatement        = "INSERT INTO invoices(customer_id, datetime, total) VALUES(?, ?, ?)"
+	UpdateInvoiceStatement       = "UPDATE invoices SET total = ? WHERE id = ?"
 
 	// Errors
 	ErrorInvoiceNotFound               = errors.New("invoice not found")
@@ -25,9 +26,10 @@ var (
 )
 
 type InvoiceRepository interface {
+	GetAllTotalEmpty(ctx context.Context) ([]domain.Invoice, error)
 	Get(ctx context.Context, id int) (domain.Invoice, error)
 	StoreBulk(ctx context.Context, invoices []domain.Invoice) ([]domain.Invoice, error)
-	Update(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error)
+	UpdateTotal(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error)
 }
 
 func NewInvoiceRepository(db *sql.DB) InvoiceRepository {
@@ -38,6 +40,28 @@ func NewInvoiceRepository(db *sql.DB) InvoiceRepository {
 
 type invoiceRepository struct {
 	db *sql.DB
+}
+
+func (r *invoiceRepository) GetAllTotalEmpty(ctx context.Context) ([]domain.Invoice, error) {
+	rows, err := r.db.QueryContext(ctx, GetAllTotalEmptyInvoiceQuery)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var invoices []domain.Invoice
+
+	for rows.Next() {
+		var invoice domain.Invoice
+		err = rows.Scan(&invoice.Id, &invoice.Customer_id, &invoice.Datetime, &invoice.Total)
+		if err != nil {
+			return nil, err
+		}
+
+		invoices = append(invoices, invoice)
+	}
+
+	return invoices, nil
 }
 
 func (r *invoiceRepository) Get(ctx context.Context, id int) (domain.Invoice, error) {
@@ -85,7 +109,7 @@ func (r *invoiceRepository) StoreBulk(ctx context.Context, invoices []domain.Inv
 	return invoices, nil
 }
 
-func (r *invoiceRepository) Update(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error) {
+func (r *invoiceRepository) UpdateTotal(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error) {
 	stmt, err := r.db.PrepareContext(ctx, UpdateInvoiceStatement)
 
 	if err != nil {
