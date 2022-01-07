@@ -62,7 +62,7 @@ func (s *invoiceService) StoreBulk(ctx context.Context) ([]domain.Invoice, error
 
 			// Check if invoice already exists
 			invoiceExists, err := s.repository.Get(ctx, invoiceAux.Id)
-			if err == nil && invoiceExists == emptyInvoice {
+			if err != nil && invoiceExists == emptyInvoice {
 				invoices = append(invoices, invoiceAux)
 			}
 		}

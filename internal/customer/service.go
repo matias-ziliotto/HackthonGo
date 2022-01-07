@@ -63,7 +63,7 @@ func (s *customerService) StoreBulk(ctx context.Context) ([]domain.Customer, err
 
 			// Check if customer already exists
 			customerExists, err := s.repository.Get(ctx, customerAux.Id)
-			if err == nil && customerExists == emptyCustomer {
+			if err != nil && customerExists == emptyCustomer {
 				customers = append(customers, customerAux)
 			}
 		}
