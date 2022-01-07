@@ -12,8 +12,9 @@ import (
 
 var (
 	// Db queries & statements
-	GetCustomerQuery       = "SELECT id, first_name, last_name, situation FROM customers WHERE id = ?"
-	StoreCustomerStatement = "INSERT INTO customers(first_name, last_name, situation) VALUES(?, ?, ?)"
+	GetCustomerQuery                  = "SELECT id, first_name, last_name, situation FROM customers WHERE id = ?"
+	GetCustomersTotalByConditionQuery = "SELECT customers.situation, ROUND(SUM(invoices.total), 2) FROM customers INNER JOIN invoices ON invoices.customer_id = customers.id GROUP BY customers.situation;"
+	StoreCustomerStatement            = "INSERT INTO customers(first_name, last_name, situation) VALUES(?, ?, ?)"
 
 	// Errors
 	ErrorCustomerNotFound              = errors.New("customer not found")
@@ -23,6 +24,7 @@ var (
 
 type CustomerRepository interface {
 	Get(ctx context.Context, id int) (domain.Customer, error)
+	GetTotalByCondition(ctx context.Context) ([]domain.CustomerTotalByConditionDTO, error)
 	StoreBulk(ctx context.Context, customers []domain.Customer) ([]domain.Customer, error)
 }
 
@@ -79,4 +81,26 @@ func (r *customerRepository) StoreBulk(ctx context.Context, customers []domain.C
 	}
 
 	return customers, nil
+}
+
+func (r *customerRepository) GetTotalByCondition(ctx context.Context) ([]domain.CustomerTotalByConditionDTO, error) {
+	rows, err := r.db.QueryContext(ctx, GetCustomersTotalByConditionQuery)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var customerTotalByConditions []domain.CustomerTotalByConditionDTO
+
+	for rows.Next() {
+		var customerTotalByCondition domain.CustomerTotalByConditionDTO
+		err = rows.Scan(&customerTotalByCondition.Situation, &customerTotalByCondition.Total)
+		if err != nil {
+			return nil, err
+		}
+
+		customerTotalByConditions = append(customerTotalByConditions, customerTotalByCondition)
+	}
+
+	return customerTotalByConditions, nil
 }

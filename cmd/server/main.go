@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -19,6 +18,7 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/load-files", LoadData())
+	router.GET("/consumers/total-by-condition", GetConsumersTotalByCondition())
 
 	if err := router.Run(); err != nil {
 		log.Fatal(err)
@@ -51,37 +51,54 @@ func LoadData() gin.HandlerFunc {
 
 		_, err := productService.StoreBulk(ctx)
 		if err != nil {
-			web.Error(c, http.StatusInternalServerError, "Error in store products")
+			web.Error(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		_, err = customerService.StoreBulk(ctx)
 		if err != nil {
-			web.Error(c, http.StatusInternalServerError, "Error in store customers")
+			web.Error(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		_, err = invoiceService.StoreBulk(ctx)
 		if err != nil {
-			web.Error(c, http.StatusInternalServerError, "Error in store invoices")
+			web.Error(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		_, err = saleService.StoreBulk(ctx)
 		if err != nil {
-			web.Error(c, http.StatusInternalServerError, "Error in store sales")
+			web.Error(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		log.Println("Insert's work fine")
-
 		_, err = invoiceService.UpdateTotal(context.Background())
 		if err != nil {
-			fmt.Println(err)
-			web.Error(c, http.StatusInternalServerError, "Error updating invoice totals!")
+			web.Error(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		web.Success(c, http.StatusOK, "Data loaded!")
+	}
+}
+
+func GetConsumersTotalByCondition() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := context.Background()
+		dbCustomer := sql.MySqlDB
+
+		// Customers
+		customerRepository := customer.NewCustomerRepository(dbCustomer)
+		customerService := customer.NewCustomerService(customerRepository)
+
+		customerTotalByConditionDTO, err := customerService.GetTotalByCondition(ctx)
+
+		if err != nil {
+			web.Error(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		web.Success(c, http.StatusOK, customerTotalByConditionDTO)
 	}
 }

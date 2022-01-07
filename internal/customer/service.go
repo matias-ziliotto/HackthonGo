@@ -15,6 +15,7 @@ var (
 type CustomerService interface {
 	Get(ctx context.Context, id int) (domain.Customer, error)
 	StoreBulk(ctx context.Context) ([]domain.Customer, error)
+	GetTotalByCondition(ctx context.Context) ([]domain.CustomerTotalByConditionDTO, error)
 }
 
 func NewCustomerService(pr CustomerRepository) CustomerService {
@@ -80,4 +81,14 @@ func (s *customerService) StoreBulk(ctx context.Context) ([]domain.Customer, err
 	}
 
 	return customersSaved, nil
+}
+
+func (s *customerService) GetTotalByCondition(ctx context.Context) ([]domain.CustomerTotalByConditionDTO, error) {
+	customersTotalByContidion, err := s.repository.GetTotalByCondition(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return customersTotalByContidion, nil
 }

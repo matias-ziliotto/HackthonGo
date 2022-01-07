@@ -6,3 +6,8 @@ type Customer struct {
 	LastName  string `json:"last_name"`
 	Situation string `json:"situation"`
 }
+
+type CustomerTotalByConditionDTO struct {
+	Situation string  `json:"situation"`
+	Total     float64 `json:"total"`
+}
