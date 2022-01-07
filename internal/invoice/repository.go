@@ -78,7 +78,7 @@ func (r *invoiceRepository) Get(ctx context.Context, id int) (domain.Invoice, er
 
 func (r *invoiceRepository) StoreBulk(ctx context.Context, invoices []domain.Invoice) ([]domain.Invoice, error) {
 	valueStrings := make([]string, 0, len(invoices))
-	valueArgs := make([]interface{}, 0, len(invoices)*3)
+	valueArgs := make([]interface{}, 0, len(invoices)*4)
 
 	for _, invoice := range invoices {
 		valueStrings = append(valueStrings, "(?, ?, ?, ?)")
