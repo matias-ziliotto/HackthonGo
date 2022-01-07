@@ -29,7 +29,8 @@ type InvoiceRepository interface {
 	GetAllTotalEmpty(ctx context.Context) ([]domain.Invoice, error)
 	Get(ctx context.Context, id int) (domain.Invoice, error)
 	StoreBulk(ctx context.Context, invoices []domain.Invoice) ([]domain.Invoice, error)
-	UpdateTotal(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error)
+	UpdateTotal(ctx context.Context, invoice domain.Invoice) (domain.Invoice, error)
+	// CalculateTotal(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error)
 }
 
 func NewInvoiceRepository(db *sql.DB) InvoiceRepository {
@@ -109,7 +110,7 @@ func (r *invoiceRepository) StoreBulk(ctx context.Context, invoices []domain.Inv
 	return invoices, nil
 }
 
-func (r *invoiceRepository) UpdateTotal(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error) {
+func (r *invoiceRepository) UpdateTotal(ctx context.Context, invoice domain.Invoice) (domain.Invoice, error) {
 	stmt, err := r.db.PrepareContext(ctx, UpdateInvoiceStatement)
 
 	if err != nil {

@@ -174,7 +174,7 @@ func TestInvoiceUpdateTotal(t *testing.T) {
 	_, err = repository.StoreBulk(context.Background(), invoicesToStore)
 	assert.Nil(t, err, "error should be nil")
 
-	invoiceUpdated, _ := repository.UpdateTotal(context.Background(), invoiceToUpdate.Id, invoiceToUpdate)
+	invoiceUpdated, _ := repository.UpdateTotal(context.Background(), invoiceToUpdate)
 
 	// Assert
 	assert.Equal(t, invoiceToUpdate, invoiceUpdated, "invoice updated should be equal invoice to update")
