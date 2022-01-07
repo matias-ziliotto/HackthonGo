@@ -68,6 +68,10 @@ func (s *invoiceService) StoreBulk(ctx context.Context) ([]domain.Invoice, error
 		}
 	}
 
+	if len(invoices) == 0 {
+		return invoices, nil
+	}
+
 	invoicesSaved, err := s.repository.StoreBulk(ctx, invoices)
 
 	if err != nil {

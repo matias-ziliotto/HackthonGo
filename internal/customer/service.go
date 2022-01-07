@@ -69,6 +69,10 @@ func (s *customerService) StoreBulk(ctx context.Context) ([]domain.Customer, err
 		}
 	}
 
+	if len(customers) == 0 {
+		return customers, nil
+	}
+
 	customersSaved, err := s.repository.StoreBulk(ctx, customers)
 
 	if err != nil {
