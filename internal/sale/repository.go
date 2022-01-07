@@ -49,7 +49,7 @@ func (r *saleRepository) Get(ctx context.Context, id int) (domain.Sale, error) {
 
 func (r *saleRepository) StoreBulk(ctx context.Context, sales []domain.Sale) ([]domain.Sale, error) {
 	valueStrings := make([]string, 0, len(sales))
-	valueArgs := make([]interface{}, 0, len(sales)*3)
+	valueArgs := make([]interface{}, 0, len(sales)*4)
 
 	for _, sale := range sales {
 		valueStrings = append(valueStrings, "(?, ?, ?, ?)")
