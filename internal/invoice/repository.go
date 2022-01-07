@@ -12,18 +12,22 @@ import (
 
 var (
 	// Db queries & statements
-	GetInvoiceQuery       = "SELECT id, customer_id, datetime, total FROM invoices WHERE id = ?"
-	StoreInvoiceStatement = "INSERT INTO invoices(customer_id, datetime, total) VALUES(?, ?, ?)"
+	GetInvoiceQuery        = "SELECT id, customer_id, datetime, total FROM invoices WHERE id = ?"
+	StoreInvoiceStatement  = "INSERT INTO invoices(customer_id, datetime, total) VALUES(?, ?, ?)"
+	UpdateInvoiceStatement = "UPDATE invoices SET total = ? WHERE id = ?"
 
 	// Errors
-	ErrorInvoiceNotFound              = errors.New("invoice not found")
-	ErrorInvoicePrepareStoreStatement = errors.New("can not prepare store statement")
-	ErrorInvoiceExecStoreStatement    = errors.New("error executing store statement")
+	ErrorInvoiceNotFound               = errors.New("invoice not found")
+	ErrorInvoicePrepareStoreStatement  = errors.New("can not prepare store statement")
+	ErrorInvoiceExecStoreStatement     = errors.New("error executing store statement")
+	ErrorInvoicePrepareUpdateStatement = errors.New("can not prepare update statement")
+	ErrorInvoiceExecUpdateStatement    = errors.New("error executing update statement")
 )
 
 type InvoiceRepository interface {
 	Get(ctx context.Context, id int) (domain.Invoice, error)
 	StoreBulk(ctx context.Context, invoices []domain.Invoice) ([]domain.Invoice, error)
+	Update(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error)
 }
 
 func NewInvoiceRepository(db *sql.DB) InvoiceRepository {
@@ -79,4 +83,28 @@ func (r *invoiceRepository) StoreBulk(ctx context.Context, invoices []domain.Inv
 	}
 
 	return invoices, nil
+}
+
+func (r *invoiceRepository) Update(ctx context.Context, id int, invoice domain.Invoice) (domain.Invoice, error) {
+	stmt, err := r.db.PrepareContext(ctx, UpdateInvoiceStatement)
+
+	if err != nil {
+		return domain.Invoice{}, ErrorInvoicePrepareUpdateStatement
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.ExecContext(ctx, invoice.Total, invoice.Id)
+
+	if err != nil {
+		return domain.Invoice{}, ErrorInvoiceExecUpdateStatement
+	}
+
+	_, err = result.RowsAffected()
+
+	if err != nil {
+		return domain.Invoice{}, err
+	}
+
+	return invoice, nil
 }

@@ -19,6 +19,11 @@ var invoicesToStoreAndGet = []domain.Invoice{
 	},
 }
 
+var invoiceToUpdate = domain.Invoice{
+	Id:    1000,
+	Total: 1,
+}
+
 var invoicesToStore = []domain.Invoice{
 	{
 		Id:          1000,
@@ -152,4 +157,26 @@ func TestInvoiceStoreBulkError(t *testing.T) {
 	// Assert
 	assert.Error(t, err, "should exist an error")
 	assert.Nil(t, result, "result should be nil")
+}
+
+func TestInvoiceUpdate(t *testing.T) {
+	// Arrange
+	db, err := sql.InitTxSqlDb()
+	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
+	repository := NewInvoiceRepository(db)
+
+	repositoryCustomer := customer.NewCustomerRepository(db)
+	_, err = repositoryCustomer.StoreBulk(context.Background(), customers) // insert dummy customer
+	assert.Nil(t, err, "error should be nil")
+
+	// Act
+	_, err = repository.StoreBulk(context.Background(), invoicesToStore)
+	assert.Nil(t, err, "error should be nil")
+
+	invoiceUpdated, _ := repository.Update(context.Background(), invoiceToUpdate.Id, invoiceToUpdate)
+
+	// Assert
+	assert.Equal(t, invoiceToUpdate, invoiceUpdated, "invoice updated should be equal invoice to update")
+	assert.Nil(t, err, "error should be nil")
 }
