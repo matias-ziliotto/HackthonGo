@@ -16,6 +16,7 @@ type CustomerService interface {
 	Get(ctx context.Context, id int) (domain.Customer, error)
 	StoreBulk(ctx context.Context) ([]domain.Customer, error)
 	GetTotalByCondition(ctx context.Context) ([]domain.CustomerTotalByConditionDTO, error)
+	GetCustomerCheaperProducts(ctx context.Context) ([]domain.CustomerCheaperProductDTO, error)
 }
 
 func NewCustomerService(pr CustomerRepository) CustomerService {
@@ -91,4 +92,14 @@ func (s *customerService) GetTotalByCondition(ctx context.Context) ([]domain.Cus
 	}
 
 	return customersTotalByContidion, nil
+}
+
+func (s *customerService) GetCustomerCheaperProducts(ctx context.Context) ([]domain.CustomerCheaperProductDTO, error) {
+	customersCheaperProducts, err := s.repository.GetCustomerCheaperProducts(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return customersCheaperProducts, nil
 }

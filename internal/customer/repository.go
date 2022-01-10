@@ -14,6 +14,7 @@ var (
 	// Db queries & statements
 	GetCustomerQuery                  = "SELECT id, first_name, last_name, situation FROM customers WHERE id = ?"
 	GetCustomersTotalByConditionQuery = "SELECT customers.situation, ROUND(SUM(invoices.total), 2) FROM customers INNER JOIN invoices ON invoices.customer_id = customers.id GROUP BY customers.situation;"
+	GetCustomersCheaperProductsQuery  = "SELECT DISTINCT(customers.last_name), customers.first_name, products.price FROM customers INNER JOIN invoices ON invoices.customer_id = customers.id INNER JOIN sales ON sales.invoice_id = invoices.id INNER JOIN products ON sales.product_id = products.id ORDER BY products.price ASC, customers.last_name ASC LIMIT 5;"
 	StoreCustomerStatement            = "INSERT INTO customers(first_name, last_name, situation) VALUES(?, ?, ?)"
 
 	// Errors
@@ -25,6 +26,7 @@ var (
 type CustomerRepository interface {
 	Get(ctx context.Context, id int) (domain.Customer, error)
 	GetTotalByCondition(ctx context.Context) ([]domain.CustomerTotalByConditionDTO, error)
+	GetCustomerCheaperProducts(ctx context.Context) ([]domain.CustomerCheaperProductDTO, error)
 	StoreBulk(ctx context.Context, customers []domain.Customer) ([]domain.Customer, error)
 }
 
@@ -103,4 +105,27 @@ func (r *customerRepository) GetTotalByCondition(ctx context.Context) ([]domain.
 	}
 
 	return customerTotalByConditions, nil
+}
+
+func (r *customerRepository) GetCustomerCheaperProducts(ctx context.Context) ([]domain.CustomerCheaperProductDTO, error) {
+	rows, err := r.db.QueryContext(ctx, GetCustomersCheaperProductsQuery)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var customerCheaperProducts []domain.CustomerCheaperProductDTO
+
+	for rows.Next() {
+		var customerCheaperProduct domain.CustomerCheaperProductDTO
+		var price float64
+		err = rows.Scan(&customerCheaperProduct.LastName, &customerCheaperProduct.FirstName, &price)
+		if err != nil {
+			return nil, err
+		}
+
+		customerCheaperProducts = append(customerCheaperProducts, customerCheaperProduct)
+	}
+
+	return customerCheaperProducts, nil
 }

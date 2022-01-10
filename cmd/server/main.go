@@ -18,8 +18,9 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/load-files", LoadData())
-	router.GET("/consumers/total-by-condition", GetConsumersTotalByCondition())
-	router.GET("/products/most-selled", GetProductsMostSelled())
+	router.GET("/customers/total-by-condition", GetCustomersTotalByCondition())
+	router.GET("/products/top/most-selled", GetProductsMostSelled())
+	router.GET("/customers/top/cheaper-products", GetCustomersCheaperProducts())
 
 	if err := router.Run(); err != nil {
 		log.Fatal(err)
@@ -84,7 +85,7 @@ func LoadData() gin.HandlerFunc {
 	}
 }
 
-func GetConsumersTotalByCondition() gin.HandlerFunc {
+func GetCustomersTotalByCondition() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := context.Background()
 		dbCustomer := sql.MySqlDB
@@ -109,7 +110,7 @@ func GetProductsMostSelled() gin.HandlerFunc {
 		ctx := context.Background()
 		dbProducts := sql.MySqlDB
 
-		// Customers
+		// Products
 		productRepository := product.NewProductRepository(dbProducts)
 		productService := product.NewProductService(productRepository)
 
@@ -121,5 +122,25 @@ func GetProductsMostSelled() gin.HandlerFunc {
 		}
 
 		web.Success(c, http.StatusOK, productsMostSelled)
+	}
+}
+
+func GetCustomersCheaperProducts() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := context.Background()
+		dbCustomer := sql.MySqlDB
+
+		// Customers
+		customerRepository := customer.NewCustomerRepository(dbCustomer)
+		customerService := customer.NewCustomerService(customerRepository)
+
+		customerCheaperProducts, err := customerService.GetCustomerCheaperProducts(ctx)
+
+		if err != nil {
+			web.Error(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		web.Success(c, http.StatusOK, customerCheaperProducts)
 	}
 }
