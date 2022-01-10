@@ -6,6 +6,8 @@ import (
 
 	"github.com/matias-ziliotto/HackthonGo/internal/customer"
 	"github.com/matias-ziliotto/HackthonGo/internal/domain"
+	"github.com/matias-ziliotto/HackthonGo/internal/product"
+	"github.com/matias-ziliotto/HackthonGo/internal/sale"
 	"github.com/matias-ziliotto/HackthonGo/pkg/database/sql"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +17,7 @@ var invoicesToStoreAndGet = []domain.Invoice{
 		Id:          40000,
 		Customer_id: 1000,
 		Datetime:    "2022-01-06 11:11:11",
-		Total:       200.5,
+		Total:       0,
 	},
 }
 
@@ -68,6 +70,23 @@ var customers = []domain.Customer{
 		FirstName: "Coki",
 		LastName:  "Argento",
 		Situation: "Activo",
+	},
+}
+
+var products = []domain.Product{
+	{
+		Id:          50000,
+		Description: "Description de producto",
+		Price:       100.5,
+	},
+}
+
+var sales = []domain.Sale{
+	{
+		Id:         50000,
+		Invoice_id: 40000,
+		Product_id: 50000,
+		Quantity:   1,
 	},
 }
 
@@ -178,5 +197,55 @@ func TestInvoiceUpdateTotal(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, invoiceToUpdate, invoiceUpdated, "invoice updated should be equal invoice to update")
+	assert.Nil(t, err, "error should be nil")
+}
+
+func TestInvoiceGetAllTotalEmpty(t *testing.T) {
+	// Arrange
+	db, err := sql.InitTxSqlDb()
+	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
+	repository := NewInvoiceRepository(db)
+
+	repositoryCustomer := customer.NewCustomerRepository(db)
+	_, err = repositoryCustomer.StoreBulk(context.Background(), customers) // insert dummy customer
+	assert.Nil(t, err, "error should be nil")
+
+	// Act
+	_, _ = repository.StoreBulk(context.Background(), invoicesToStoreAndGet)
+	result, err := repository.GetAllTotalEmpty(context.Background())
+
+	// Assert
+	assert.True(t, len(result) > 0, "result should has more than 0 results")
+	assert.Nil(t, err, "error should be nil")
+}
+
+func TestInvoiceCalculateTotal(t *testing.T) {
+	// Arrange
+	db, err := sql.InitTxSqlDb()
+	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
+	repository := NewInvoiceRepository(db)
+
+	repositoryCustomer := customer.NewCustomerRepository(db)
+	_, err = repositoryCustomer.StoreBulk(context.Background(), customers) // insert dummy customer
+	assert.Nil(t, err, "error should be nil")
+
+	repositoryProduct := product.NewProductRepository(db)
+	_, err = repositoryProduct.StoreBulk(context.Background(), products) // insert dummy product
+	assert.Nil(t, err, "error should be nil")
+
+	// Act
+	_, _ = repository.StoreBulk(context.Background(), invoicesToStoreAndGet)
+
+	repositorySale := sale.NewSaleRepository(db)
+	_, err = repositorySale.StoreBulk(context.Background(), sales) // insert dummy customer
+	assert.Nil(t, err, "error should be nil")
+
+	ids, _ := repository.GetAllTotalEmpty(context.Background())
+	result, err := repository.CalculateTotal(context.Background(), ids)
+
+	// Assert
+	assert.True(t, len(result) > 0, "result should has more than 0 results")
 	assert.Nil(t, err, "error should be nil")
 }

@@ -132,7 +132,7 @@ func TestCustomerStoreBulkError(t *testing.T) {
 	assert.Nil(t, result, "result should be nil")
 }
 
-func TestGetTotalByCondition(t *testing.T) {
+func TestCustomerGetTotalByCondition(t *testing.T) {
 	// Arrange
 	db, err := sql.InitTxSqlDb()
 	assert.Nil(t, err, "error should be nil")
