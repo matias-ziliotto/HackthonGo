@@ -67,9 +67,7 @@ func TestServiceCustomerStoreBulk(t *testing.T) {
 	}
 
 	mock.ExpectPrepare("INSERT INTO customers")
-	for i := 1; i <= 50; i++ {
-		mock.ExpectExec("INSERT INTO customers").WillReturnResult(sqlmock.NewResult(int64(i), 1))
-	}
+	mock.ExpectExec("INSERT INTO customers").WillReturnResult(sqlmock.NewResult(50, 50))
 
 	// Act
 	result, err := customerService.StoreBulk(context.Background())
@@ -77,6 +75,28 @@ func TestServiceCustomerStoreBulk(t *testing.T) {
 	// Assert
 	assert.True(t, len(result) > 0, "result should has more than 0 results")
 	assert.Nil(t, err, "error should be nil")
+}
+
+func TestServiceCustomerStoreBulkError(t *testing.T) {
+	// Arrange
+	db, mock, err := sqlmock.New()
+	assert.Nil(t, err, "error should be nil")
+	customerRepository := NewCustomerRepository(db)
+	customerService := NewCustomerService(customerRepository)
+
+	for i := 1; i <= 50; i++ {
+		mock.ExpectQuery(GetCustomerQuery).WithArgs(i).WillReturnError(ErrorCustomerNotFound)
+	}
+
+	mock.ExpectPrepare("INSERT INTO customers")
+	mock.ExpectExec("INSERT INTO customers").WillReturnError(errors.New("error"))
+
+	// Act
+	result, err := customerService.StoreBulk(context.Background())
+
+	// Assert
+	assert.Error(t, err, "should exists an error")
+	assert.Nil(t, result, "result should be nil")
 }
 
 func TestServiceCustomerGetTotalByCondition(t *testing.T) {
