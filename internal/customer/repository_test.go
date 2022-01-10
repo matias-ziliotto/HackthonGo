@@ -131,3 +131,31 @@ func TestCustomerStoreBulkError(t *testing.T) {
 	assert.Error(t, err, "should exist an error")
 	assert.Nil(t, result, "result should be nil")
 }
+
+func TestGetTotalByCondition(t *testing.T) {
+	// Arrange
+	db, err := sql.InitTxSqlDb()
+	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
+	repository := NewCustomerRepository(db)
+
+	// Act
+	_, err = repository.GetTotalByCondition(context.Background())
+
+	// Assert
+	assert.Nil(t, err, "error should be nil")
+}
+
+func TestGetCustomerCheaperProducts(t *testing.T) {
+	// Arrange
+	db, err := sql.InitTxSqlDb()
+	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
+	repository := NewCustomerRepository(db)
+
+	// Act
+	_, err = repository.GetCustomerCheaperProducts(context.Background())
+
+	// Assert
+	assert.Nil(t, err, "error should be nil")
+}
