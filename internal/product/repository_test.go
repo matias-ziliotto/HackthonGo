@@ -4,7 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/matias-ziliotto/HackthonGo/internal/customer"
 	"github.com/matias-ziliotto/HackthonGo/internal/domain"
+	"github.com/matias-ziliotto/HackthonGo/internal/invoice"
+	"github.com/matias-ziliotto/HackthonGo/internal/sale"
 	"github.com/matias-ziliotto/HackthonGo/pkg/database/sql"
 	"github.com/stretchr/testify/assert"
 )
@@ -47,6 +50,33 @@ var productsToStoreErrorStore = []domain.Product{
 		Id:          2000,
 		Description: "Descripcion 1000",
 		Price:       1000.0,
+	},
+}
+
+var customers = []domain.Customer{
+	{
+		Id:        1000,
+		FirstName: "Coki",
+		LastName:  "Argento",
+		Situation: "Activo",
+	},
+}
+
+var invoices = []domain.Invoice{
+	{
+		Id:          40000,
+		Customer_id: 1000,
+		Datetime:    "2022-01-06 11:11:11",
+		Total:       0,
+	},
+}
+
+var sales = []domain.Sale{
+	{
+		Id:         50000,
+		Invoice_id: 40000,
+		Product_id: 40000,
+		Quantity:   1,
 	},
 }
 
@@ -124,4 +154,33 @@ func TestProductStoreBulkError(t *testing.T) {
 	// Assert
 	assert.Error(t, err, "should exist an error")
 	assert.Nil(t, result, "result should be nil")
+}
+
+func TestProductProductsMostSelled(t *testing.T) {
+	// Arrange
+	db, err := sql.InitTxSqlDb()
+	assert.Nil(t, err, "error should be nil")
+	defer db.Close()
+	repository := NewProductRepository(db)
+
+	repositoryCustomer := customer.NewCustomerRepository(db)
+	_, err = repositoryCustomer.StoreBulk(context.Background(), customers) // insert dummy customer
+	assert.Nil(t, err, "error should be nil")
+
+	repositoryInvoice := invoice.NewInvoiceRepository(db)
+	_, err = repositoryInvoice.StoreBulk(context.Background(), invoices) // insert dummy invoice
+	assert.Nil(t, err, "error should be nil")
+
+	// Act
+	_, _ = repository.StoreBulk(context.Background(), productsToStoreAndGet)
+
+	repositorySale := sale.NewSaleRepository(db)
+	_, err = repositorySale.StoreBulk(context.Background(), sales) // insert dummy sale
+	assert.Nil(t, err, "error should be nil")
+
+	result, err := repository.ProductsMostSelled(context.Background())
+
+	// Assert
+	assert.True(t, len(result) > 0, "result should has more than 0 results")
+	assert.Nil(t, err, "error should be nil")
 }
