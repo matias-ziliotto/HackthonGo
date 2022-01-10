@@ -12,8 +12,9 @@ import (
 
 var (
 	// Db queries & statements
-	GetProductQuery       = "SELECT id, description, price FROM products WHERE id = ?"
-	StoreProductStatement = "INSERT INTO products(description, price) VALUES(?, ?)"
+	GetProductQuery            = "SELECT id, description, price FROM products WHERE id = ?"
+	GetProductsMostSelledQuery = "SELECT COUNT(products.id) as count_total, products.description, ROUND(SUM(products.price), 1) as total FROM products INNER JOIN sales ON sales.product_id = products.id GROUP BY products.id ORDER BY count_total DESC LIMIT 5;"
+	StoreProductStatement      = "INSERT INTO products(description, price) VALUES(?, ?)"
 
 	// Errors
 	ErrorProductNotFound              = errors.New("product not found")
@@ -24,6 +25,7 @@ var (
 type ProductRepository interface {
 	Get(ctx context.Context, id int) (domain.Product, error)
 	StoreBulk(ctx context.Context, products []domain.Product) ([]domain.Product, error)
+	ProductsMostSelled(ctx context.Context) ([]domain.ProductMostSelledDTO, error)
 }
 
 func NewProductRepository(db *sql.DB) ProductRepository {
@@ -78,4 +80,27 @@ func (r *productRepository) StoreBulk(ctx context.Context, products []domain.Pro
 	}
 
 	return products, nil
+}
+
+func (r *productRepository) ProductsMostSelled(ctx context.Context) ([]domain.ProductMostSelledDTO, error) {
+	rows, err := r.db.QueryContext(ctx, GetProductsMostSelledQuery)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var productsMostSelled []domain.ProductMostSelledDTO
+
+	for rows.Next() {
+		var productMostSelled domain.ProductMostSelledDTO
+		var id int
+		err = rows.Scan(&id, &productMostSelled.Description, &productMostSelled.Total)
+		if err != nil {
+			return nil, err
+		}
+
+		productsMostSelled = append(productsMostSelled, productMostSelled)
+	}
+
+	return productsMostSelled, nil
 }

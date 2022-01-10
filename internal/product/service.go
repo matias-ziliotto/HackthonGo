@@ -15,6 +15,7 @@ var (
 type ProductService interface {
 	Get(ctx context.Context, id int) (domain.Product, error)
 	StoreBulk(ctx context.Context) ([]domain.Product, error)
+	GetProductsMostSelled(ctx context.Context) ([]domain.ProductMostSelledDTO, error)
 }
 
 func NewProductService(pr ProductRepository) ProductService {
@@ -78,4 +79,14 @@ func (s *productService) StoreBulk(ctx context.Context) ([]domain.Product, error
 	}
 
 	return productsSaved, nil
+}
+
+func (s *productService) GetProductsMostSelled(ctx context.Context) ([]domain.ProductMostSelledDTO, error) {
+	productsMostSelled, err := s.repository.ProductsMostSelled(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return productsMostSelled, nil
 }

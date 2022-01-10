@@ -19,6 +19,7 @@ func main() {
 
 	router.GET("/load-files", LoadData())
 	router.GET("/consumers/total-by-condition", GetConsumersTotalByCondition())
+	router.GET("/products/most-selled", GetProductsMostSelled())
 
 	if err := router.Run(); err != nil {
 		log.Fatal(err)
@@ -100,5 +101,25 @@ func GetConsumersTotalByCondition() gin.HandlerFunc {
 		}
 
 		web.Success(c, http.StatusOK, customerTotalByConditionDTO)
+	}
+}
+
+func GetProductsMostSelled() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := context.Background()
+		dbProducts := sql.MySqlDB
+
+		// Customers
+		productRepository := product.NewProductRepository(dbProducts)
+		productService := product.NewProductService(productRepository)
+
+		productsMostSelled, err := productService.GetProductsMostSelled(ctx)
+
+		if err != nil {
+			web.Error(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		web.Success(c, http.StatusOK, productsMostSelled)
 	}
 }
